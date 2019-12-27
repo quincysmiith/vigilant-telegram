@@ -69,7 +69,7 @@ A database is made up of one or more tables.
 
 A single table is made up of rows and columns. A single table has 2 dimensions.
 
-A row is a single line in a table. Also may be refeered to as a record.
+A row is a single line in a table. Also may be reffered to as a record.
 
 A column is like a field.
 
@@ -275,3 +275,305 @@ Using the WHERE clause with a delete statement identifies which rows you would l
 # 03. Fundamental Concepts
 
 ## Creating a table
+
+The CREATE statement can be used to create tables within a database.
+
+The below SQL creates a table with 2 columns.
+
+```sql
+CREATE TABLE test (
+  a INTEGER,
+  b TEXT
+);
+```
+
+Different databases support different datatypes.
+
+
+## Deleting a table
+
+The DROP TABLE statement is used to delete tables from a database.
+
+```sql
+DROP TABLE test;
+```
+
+If it is unclear that the table to be deleted is in the database or not then can nest the 
+DROP TABLE function in an IF EXISTS clause. If the table is there it will be deleted. This
+method is used to help avoid errors.
+
+```sql
+DROP TABLE IF EXISTS test;
+```
+
+
+## Inserting data
+
+The INSERT INTO is used to add data to a database table.
+
+```sql
+INSERT INTO test VALUES ( 1, 'This', 'Right here!' ); 
+INSERT INTO test ( b, c ) VALUES ( 'That', 'Over there!' );
+```
+
+To add an empty row use the DEFAULT VALUES clause
+
+```sql
+INSERT INTO test DEFAULT VALUES;
+```
+
+It is possible to use a select statement to add data into a table. This can insert multiple rows into the table
+
+```sql
+INSERT INTO test ( a, b, c ) SELECT id, name, description from item;
+```
+
+The example above performs the SELECT statement, then the results from that are placed in test table in columns a, b, and c.
+
+
+## Deleting rows
+
+It is a good idea to aution the WHERE clause in the delete statement before actually deleting.
+
+```sql
+SELECT * FROM test WHERE a = 1;
+```
+
+Then once happy can actually delete the data
+
+```sql
+DELETE FROM test WHERE a = 1;
+```
+
+Deleted rows can not be easily recovered.
+
+
+## The NULL value
+
+NULL is a special state for a result with no value
+
+NULL is the lack of a value.
+
+It is not possible to test for NULL values in the traditional way. The follwong will not return any rows.
+
+```sql
+SELECT * FROM test WHERE a = NULL;
+```
+
+To test for a NULL value we need to test using a IS NULL clause
+
+```sql
+SELECT * FROM test WHERE a IS NULL;
+```
+
+To test the inverse ie rows where there is actually a value can test using the IS NOT NULL clause
+
+```sql
+SELECT * FROM test WHERE a IS NOT NULL;
+```
+
+We can specify in the creation of a table if a column is allowed to accept null values.
+
+```sql
+CREATE TABLE test (
+  a INTEGER NOT NULL,
+  b TEXT NOT NULL,
+  c TEXT
+);
+```
+
+Any attempt to add NULL values into column a or b will result in a failure.
+
+## Constraining Columns
+
+Constraints are used to define certain rules and behaviours on certain columns within a table.
+
+Constraints are set on table creation.
+
+Not accepting NULL values into column c
+
+```sql
+CREATE TABLE test ( a TEXT, b TEXT, c TEXT NOT NULL );
+```
+
+Constraints can be used to set default values if no value is enrtered
+
+```sql
+CREATE TABLE test ( a TEXT, b TEXT, c TEXT DEFAULT 'panda' );
+```
+
+If a column needs to contain only unique values this can be set with UNIQUE. NULL values are often
+exempted from UNIQUE constraints. That is to say if a column has a unique constraint there can
+be multiple rows with NULL in them.
+
+```sql
+CREATE TABLE test ( a TEXT UNIQUE, b TEXT, c TEXT DEFAULT 'panda' );
+```
+
+Multiple contraints can be used on a single column
+
+```sql
+CREATE TABLE test ( a TEXT UNIQUE NOT NULL, b TEXT, c TEXT DEFAULT 'panda' );
+```
+
+
+## Changing a schema
+
+The ALTER TABLE statement can be used to modify a table after it has been created.
+
+Adding a column 'd' to an existing test table
+
+```sql
+ALTER TABLE test ADD d TEXT;
+```
+
+## ID columns
+
+An ID column is a column that holds a unique value for each row within the table.
+
+Typically ID columns are automatically populated.
+
+Creation of ID column varies between each different database system.
+
+The example below is how setting up an ID column works for SQLite.
+
+```sql
+CREATE TABLE test (
+  id INTEGER PRIMARY KEY,
+  a INTEGER,
+  b TEXT
+);
+```
+
+In SQLite setting the primary key as an integer means the database will handle populating this field 
+and auto incrementing the values in this for you.
+
+It is not necessary to insert values into an integer primary key.
+
+Each table may have only one ID column.
+
+
+## Filtering data
+
+SELECT statements are filtered using the WHERE clause.
+
+The WHERE clause takes a boolean expression (True or False)
+
+```sql
+SELECT Name, Continent, Population FROM Country WHERE Population < 100000 ORDER BY Population DESC;
+```
+
+Also include rows that have NULL as the population
+
+```sql
+SELECT Name, Continent, Population FROM Country WHERE Population < 100000 OR Population IS NULL ORDER BY Population DESC;
+```
+
+To filter when both or multiple conditions are true use the AND command in the WHERE clause
+
+```sql
+SELECT Name, Continent, Population 
+FROM Country 
+WHERE Population < 100000 AND Continent = 'Oceania' 
+ORDER BY Population DESC;
+```
+
+The like operator can be used to perform string matching. 
+
+Percent signs work as a wild card and means any 1 or more characters.
+
+```sql
+SELECT Name, Continent, Population FROM Country WHERE Name LIKE '%island%' ORDER BY Name;
+```
+
+Underscores can be used in a like, this is used to match a single character
+
+The in operator can be used to identify if row values are in a list of string literals
+
+```sql
+SELECT Name, Continent, Population FROM Country WHERE Continent IN ( 'Europe', 'Asia' ) ORDER BY Name;
+```
+
+
+## Removing Duplicates
+
+There are times when you want to know only the range of values contained in a column. SELECT DISTINCT can 
+do this for you.
+
+```sql
+SELECT DISTINCT Continent FROM Country;
+```
+
+SELECT DISTINCT can also be used to get the distinct combinations of 2 columns
+
+```sql
+SELECT DISTINCT a, b FROM test;
+```
+
+The above query will return all the distinct value pairs that columns a and b have.
+
+
+## Ordering output
+
+The ORDER BY clause is used to sort results from a query
+
+```sql
+SELECT Name FROM Country ORDER BY Name;
+```
+
+The order can be specified by passing either ASC or DESC to enforce whether the column being sorted on is 
+in ascending or descending order
+
+```sql
+SELECT Name FROM Country ORDER BY Name ASC;
+
+SELECT Name FROM Country ORDER BY Name DESC;
+```
+
+Passing multiple columns to the ORDER BY clause nests the ordering according to the order in which they were passed.
+
+The following example sorts on continent and then within each continent sorts by name.
+
+```sql
+SELECT Name, Continent FROM Country ORDER BY Continent, Name;
+```
+
+It is possible to specify whether each column passed to the ORDER BY clause is in ascending or descending order independently.
+
+In the below example Continent is sorted in a descending order while Region and Name are both in ascending order.
+
+```sql
+SELECT Name, Continent, Region FROM Country ORDER BY Continent DESC, Region, Name;
+```
+
+
+## Conditional expressions
+
+conditional expressions in sql are cumbersome.
+
+In SQL:
+* 1 is considered true
+* 0 is considered false
+* anything non zero considered true
+* empty string considered false
+* any string considered true
+
+The below example is testing if a and b themselves are true or false.
+
+```sql
+SELECT
+    CASE WHEN a THEN 'true' ELSE 'false' END as boolA,
+    CASE WHEN b THEN 'true' ELSE 'false' END as boolB
+    FROM booltest
+;
+```
+
+The example below is comparing a and b to the integer 1
+
+```sql
+SELECT
+  CASE a WHEN 1 THEN 'true' ELSE 'false' END AS boolA,
+  CASE b WHEN 1 THEN 'true' ELSE 'false' END AS boolB 
+  FROM booltest
+;
+```
