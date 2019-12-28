@@ -577,3 +577,82 @@ SELECT
   FROM booltest
 ;
 ```
+
+
+# Relationships
+
+## Understanding join
+
+Some tables contain information relating to other tables.
+
+JOINs can be used to combine data from multiple tables in a simple query.
+
+ID columns are usually used in joins to match rows across tables.
+
+The INNER JOIN is the most common form of a JOIN and is the default.
+
+The result of an INNER JOIN will return results from both tables where the join condition is met.
+
+LEFT OUTER JOIN includes rows from both tables where the JOIN condition is met **plus** the remaining rows 
+from the left table.
+
+RIGHT OUTER JOIN includes rows from both tables where the JOIN condition is met **plus** the remaining rows 
+from the right table.
+
+Many databases don't support right joins.
+
+A right join can be re-written as a left join by changing the order of the tables being joined on.
+
+A FULL OUTER JOIN combines the effects of left and right outer joins.
+
+https://www.codeproject.com/KB/database/Visual_SQL_Joins/Visual_SQL_JOINS_V2.png
+
+
+## Accessing related tables
+
+Example query
+
+```sql
+SELECT l.description AS left, r.description AS right
+  FROM left AS l
+  JOIN right AS r ON l.id = r.id
+  ;
+```
+
+'l.description' is the description column from the left table. 'r.description' is the description column from the right table.
+
+the left table is aliases as 'l'. This allows us to use the shorthand 'l' to refer to that table.
+
+Another JOIN example
+
+```sql
+SELECT s.id AS sale, s.date, i.name, i.description, s.price 
+  FROM sale AS s
+  JOIN item AS i ON s.item_id = i.id
+  ;
+```
+
+## Relating multiple tables
+
+In database tables it is common to have many to many relationships.
+
+A single customer may buy multiple products, and a single product may be bought by multiple customers.
+
+This is often handled by making use of a junction table.
+
+In the below example the sale table is the junction table as it has in it the id for both customers and items
+
+
+```sql
+SELECT i.name AS Item, c.name AS Cust, s.price AS Price
+  FROM sale AS s
+  JOIN item AS i ON s.item_id = i.id
+  JOIN customer AS c ON s.customer_id = c.id
+  ORDER BY Cust, Item
+```
+
+
+# Strings
+
+## About SQL strings
+
