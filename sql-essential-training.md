@@ -729,7 +729,7 @@ SELECT TRIM('...string...', '.');
 ```
 
 
-## Folding case
+## Forcing case
 
 There are cases where it may be necessary to force strings to be either upper case or lower case.
 
@@ -750,4 +750,135 @@ SQLite only forces to uppercase and lowercase for asci characters.
 Characters with an accent for example are not converted.
 
 Different databases may implement in a different way to achive transitioning non asci characters.
+
+
+# Numbers
+
+## Numeric types
+
+Data types are almost never the same across different database systems.
+
+There are 2 basic categories of numeric types.
+
+Fundamental numeric types are:
+* Integer
+* Real
+
+Integer types will fall into the following types
+* Integer(precision)
+* Decimal(precision, scale)
+* Money(precision, scale)
+
+Decimals are normally integer values scaled up.
+
+Real types fall in the following types:
+* Real (precision)
+* Float (precision)
+
+Real types sacrifice accuracy for scale. This is to say they are capable of representing very large or very small numbers but only to a limited number of significant figures.
+
+The following SQL query will determine A as not equal to B.
+
+```sql
+SELECT A, B, A = B FROM 
+  ( SELECT 
+    ( ( .1 + .2 ) * 10 ) as A,
+    ( 1.0 + 2.0 ) as B
+  );
+```
+
+## What type is that value
+
+The TYPEOF function is used to find the type of an expression.
+
+TYPEOF function usage example:
+
+```sql
+SELECT TYPEOF( 1 + 1 );
+```
+
+Not all database systems support the TYPEOF function.
+
+
+## Integer division
+
+When dividing one integer by another the result will always be another integer.
+
+```sql
+-- integer division
+SELECT 1 / 2;
+```
+
+The above will give the answer 0.
+
+To get a decimal answer one of the numbers needs to be converted into a real number
+
+```sql
+SELECT 1.0 / 2;
+
+-- or
+SELECT CAST(1 AS REAL) / 2;
+```
+
+
+## Rounding numbers
+
+Many database systems support the ROUND function.
+
+With a single argument the ROUND function will round to the nearest whole number
+
+```sql
+SELECT ROUND(2.55555);
+```
+
+The second argument to the ROUND function specifies the decimal places.
+
+```sql
+SELECT ROUND(2.55555, 3);
+```
+
+
+# Dates and times
+
+## Dates and times
+
+Dates are typically represented in databases with most significant components of the dates first ie Year.
+
+'2018-03-28 15:32:43'
+
+This allows for faster sorting within the database.
+
+Within databases dates and times are normally represented in UTC. 
+
+UTC is easily converted to local timezones for reporting and display purposes.
+
+Common data types for dates and times within database systems include:
+* DATE
+* TIME
+* DATETIME
+* YEAR
+* INTERVAL
+
+
+## Date and time related functions
+
+Date and time functions that work with SQLite
+
+```sql
+SELECT DATETIME('now');
+SELECT DATE('now');
+SELECT TIME('now');
+SELECT DATETIME('now', '+1 day');
+SELECT DATETIME('now', '+3 days');
+SELECT DATETIME('now', '-1 month');
+SELECT DATETIME('now', '+1 year');
+SELECT DATETIME('now', '+3 hours', '+27 minutes', '-1 day', '+3 years');
+```
+
+
+# Aggregates
+
+## What are aggregates
+
+SQL has powerful features for dealing with aggregate data.
 
