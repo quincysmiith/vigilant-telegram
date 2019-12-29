@@ -656,3 +656,98 @@ SELECT i.name AS Item, c.name AS Cust, s.price AS Price
 
 ## About SQL strings
 
+SQL has a number of operators to handle strings.
+
+Strings in SQL are typically enclosed in single quotes.
+
+To represent a single quote within a string is achieved with double single quotes.
+
+Concatenating strings is achieved with double pipes as standard ||.
+
+Different database systems have different concatanation functions.
+
+
+## Finding the length of a string
+
+Most database systems have a function to determine the length of strings.
+
+Typically this is a function called LENGTH.
+
+```sql
+SELECT LENGTH('string');
+```
+
+or in an actual query
+
+```sql
+SELECT Name, LENGTH(Name) AS Len FROM City ORDER BY Len DESC;
+```
+
+# Selecting part of a string
+
+SQL standard does not include a substring function, however all major database systems support a substring operation.
+
+A substring function allows you to select parts of a string depending on the position of the characters.
+
+```sql
+SELECT SUBSTR('this string', 6);
+SELECT released,
+    SUBSTR(released, 1, 4) AS year,
+    SUBSTR(released, 6, 2) AS month,
+    SUBSTR(released, 9, 2) AS day
+  FROM album
+  ORDER BY released
+```
+
+The second argument to the substring function is the starting string.
+
+The third argument to the substring function us the number of characters to select.
+
+
+## Removing spaces
+
+Often with strings it may be necessary to remove leading or trailing whitespace.
+
+This can be achieved with the TRIM function.
+
+TRIM will remove spaces from the beginning and the end, not from the middle.
+
+TRIM and its variants example
+
+```sql
+-- remove both leading and trailing whitespace
+SELECT TRIM('   string   ');
+
+-- remove leading whitespace
+SELECT LTRIM('   string   ');
+
+-- remove trailing whitespace
+SELECT RTRIM('   string   ');
+
+-- remove trailing or leading characters that isn't whitespace
+SELECT TRIM('...string...', '.');
+```
+
+
+## Folding case
+
+There are cases where it may be necessary to force strings to be either upper case or lower case.
+
+In SQL there are the UPPER and LOWER functions to achieve this.
+
+Examples
+
+```sql
+-- the upper function
+SELECT UPPER(Name) FROM City ORDER BY Name;
+
+-- the lower function
+SELECT LOWER(Name) FROM City ORDER BY Name;
+```
+
+SQLite only forces to uppercase and lowercase for asci characters. 
+
+Characters with an accent for example are not converted.
+
+Different databases may implement in a different way to achive transitioning non asci characters.
+
