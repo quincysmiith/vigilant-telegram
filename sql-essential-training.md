@@ -880,5 +880,206 @@ SELECT DATETIME('now', '+3 hours', '+27 minutes', '-1 day', '+3 years');
 
 ## What are aggregates
 
+Aggregate data is derived from more than one row at a time.
+
 SQL has powerful features for dealing with aggregate data.
+
+the COUNT function is an example of aggregation within SQL
+
+```sql
+SELECT COUNT(*) FROM Country;
+```
+
+Aggregate functions in combination with groupby allow for aggregation statistics over subsets of the data.
+
+```sql
+SELECT Region, COUNT(*)
+  FROM Country
+  GROUP BY Region
+;
+```
+
+The GROUP BY clause groups the results before applying the aggregate function.
+
+This way the aggregate function is applied to groups of data rather than the entire table.
+
+This kind of queries can be combined with ORDER BY to sort the resulting data.
+
+```sql
+SELECT Region, COUNT(*) AS Count
+  FROM Country
+  GROUP BY Region
+  ORDER BY Count DESC, Region
+;
+```
+
+The aggregate function results can be used to order the resulting data as in the above query.
+
+The below query makes use of a HAVING clause. The HAVING clause is way of filtering the results **after** the 
+grouping and aggregations have been performed.
+
+```sql
+SELECT a.title AS Album, COUNT(t.track_number) as Tracks
+  FROM track AS t
+  JOIN album AS a
+    ON a.id = t.album_id
+  GROUP BY a.id
+  HAVING Tracks >= 10
+  ORDER BY Tracks DESC, Album
+;
+```
+
+And we can use a WHERE clause as well as a HAVING clause. The WHERE clause is used to filter data **before** the 
+groupings and aggregations are applied.
+
+```sql
+SELECT a.title AS Album, COUNT(t.track_number) as Tracks
+  FROM track AS t
+  JOIN album AS a
+    ON a.id = t.album_id
+  WHERE a.artist = "The Beatles"
+  GROUP BY a.id
+  HAVING Tracks >= 10
+  ORDER BY Tracks DESC, Album
+;
+```
+
+The WHERE clause comes **before** the GROUP BY clause.
+
+The HAVING clause comes **after** the GROUP BY clause.
+
+
+## Using aggregate functions
+
+COUNT(\*) is a way of counting the rows in a table.
+
+```sql
+SELECT COUNT(*) FROM Country;
+```
+
+COUNT(column_name) is a way of counting the non-null values in that column.
+
+```sql
+SELECT COUNT(Population) FROM Country;
+```
+
+Other aggregation functions include:
+* AVG
+* MIN
+* MAX 
+* SUM
+
+```sql
+-- average population per region
+SELECT Region, AVG(Population) FROM Country GROUP BY Region;
+
+-- what are the min and max populations for countries in each region
+SELECT Region, MIN(Population), MAX(Population) FROM Country GROUP BY Region;
+
+-- what is the total population for each region
+SELECT Region, SUM(Population) FROM Country GROUP BY Region;
+```
+
+
+## Aggregating distinct functions
+
+COUNT DISTINCT is a way of counting unique values in a column in SQL
+
+```sql
+SELECT COUNT(DISTINCT HeadOfState) FROM Country;
+```
+
+
+# Transactions
+
+## What are Transactions
+
+A transaction is a group of operations that are handled in one unit of work.
+
+If any operation in a transaction fails then the whole transaction fails.
+
+The database is then restored to the state it was in before the transaction began.
+
+This is most applicable in finance where updating multiple tables makes sense to debit and credit the relevant accounts.
+
+Transactions can sometimes improve performance.
+
+For larger or more complex operations transactions can improve speed and reliability of the database.
+
+
+## Data integrity
+
+Performing a transaction
+
+```sql
+BEGIN TRANSACTION;
+INSERT INTO widgetSales ( inv_id, quan, price ) VALUES ( 1, 5, 500 );
+UPDATE widgetInventory SET onhand = ( onhand - 5 ) WHERE id = 1;
+END TRANSACTION;
+```
+
+If it is necessary to roll back to the database status before the transaction began, can use the ROLLBACK statement.
+
+```sql
+BEGIN TRANSACTION;
+INSERT INTO widgetInventory ( description, onhand ) VALUES ( 'toy', 25 );
+ROLLBACK;
+```
+
+
+## Performance
+
+A long list of inserts or updates are easily sped up by using transactions.
+
+
+# Triggers
+
+## Automating data with triggers
+
+A trigger is an operation that is automatically performed when a specified database event occurs.
+
+Each database system will have their own trigger syntax.
+
+Example trigger creation
+
+```sql
+CREATE TRIGGER newWidgetSale AFTER INSERT ON widgetSale
+    BEGIN
+        UPDATE widgetCustomer SET last_order_id = NEW.id WHERE widgetCustomer.id = NEW.customer_id;
+    END
+;
+```
+
+A trigger can be an excellent way to enforce business rules that require a table to be updated when another 
+table is updated.
+
+
+## Preventing updates
+
+Triggers can be used to prevent data being updated.
+
+The below query prevents rows in the widgetSale table being updated if the value in the reconciled column is 1.
+
+```sql
+CREATE TRIGGER updateWidgetSale BEFORE UPDATE ON widgetSale
+    BEGIN
+        SELECT RAISE(ROLLBACK, 'cannot update table "widgetSale"') FROM widgetSale
+            WHERE id = NEW.id AND reconciled = 1;
+    END
+;
+```
+
+Triggers can be used to create timestamps
+
+```sql
+CREATE TRIGGER stampSale AFTER INSERT ON widgetSale
+    BEGIN
+        UPDATE widgetSale SET stamp = DATETIME('now') WHERE id = NEW.id;
+        UPDATE widgetCustomer SET last_order_id = NEW.id, stamp = DATETIME('now')
+            WHERE widgetCustomer.id = NEW.customer_id;
+        INSERT INTO widgetLog (stamp, event, username, tablename, table_id)
+            VALUES (DATETIME('now'), 'INSERT', 'TRIGGER', 'widgetSale', NEW.id);
+    END
+;
+```
 
