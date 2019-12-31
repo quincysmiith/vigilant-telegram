@@ -1083,3 +1083,213 @@ CREATE TRIGGER stampSale AFTER INSERT ON widgetSale
 ;
 ```
 
+
+# Views and Subselects
+
+## Creating a subselect
+
+A subselect can also be described as a nested query.
+
+The result of a SELECT statement is a table. This table can then be used as a data source in another
+SELECT statement. Using like this is called a subselect.
+
+A regular SQL query
+
+```sql
+SELECT SUBSTR(a, 1, 2) AS State, SUBSTR(a, 3) AS SCode, 
+  SUBSTR(b, 1, 2) AS Country, SUBSTR(b, 3) AS CCode FROM t;
+```
+
+The same SQL query in a subselect
+
+```sql
+SELECT co.Name, ss.CCode FROM (
+    SELECT SUBSTR(a, 1, 2) AS State, SUBSTR(a, 3) AS SCode,
+      SUBSTR(b, 1, 2) AS Country, SUBSTR(b, 3) AS CCode FROM t
+  ) AS ss
+  JOIN Country AS co
+    ON co.Code2 = ss.Country
+;
+```
+
+## Searching within a result set
+
+Using a subselect to provide a list of rows to search in.
+
+Find albums that have a track on it that is less than 90 seconds.
+
+```sql
+SELECT * FROM album
+  WHERE id IN (SELECT DISTINCT album_id FROM track WHERE duration <= 90)
+;
+```
+
+The above query finds the distinct album ids that have a track less than 90 seconds. This
+list is then matched with the album table to find the associated album name.
+
+This method can also be used in JOINs. In the below example it is used to filter the album data
+before it is joined.
+
+```sql
+SELECT a.title AS album, a.artist, t.track_number AS seq, t.title, t.duration AS secs
+  FROM album AS a
+  JOIN track AS t
+    ON t.album_id = a.id
+  WHERE a.id IN (SELECT DISTINCT album_id FROM track WHERE duration <= 90)
+  ORDER BY a.title, t.track_number
+;
+```
+
+Using it on the left side of a join is also possible 
+
+```sql
+SELECT a.title AS album, a.artist, t.track_number AS seq, t.title, t.duration AS secs
+  FROM album AS a
+  JOIN (
+    SELECT album_id, track_number, duration, title
+      FROM track
+      WHERE duration <= 90
+  ) AS t
+    ON t.album_id = a.id
+  ORDER BY a.title, t.track_number
+;
+```
+
+Subselects can be used anywhere you would use a table.
+
+## Creating a view
+
+In SQL it is possible to save a query as a view and use that view as if it were a table.
+
+```sql
+-- a query to extract track minutes and seconds
+SELECT id, album_id, title, track_number, duration / 60 AS m, duration % 60 AS s FROM track;
+```
+
+Creating a view from the above query.
+
+```sql
+CREATE VIEW trackView AS
+  SELECT id, album_id, title, track_number, 
+    duration / 60 AS m, duration % 60 AS s FROM track;
+SELECT * FROM trackView;
+```
+
+This view can then be queried as per any regular table
+
+```sql
+SELECT * FROM trackView;
+```
+
+Queries that are often ran can be saved as views for easy access.
+
+The view can then be accessed in all the ways a regular table is. They can be used in JOINs or
+in subselects themselves.
+
+Views can be deleted similar to tables.
+
+```sql
+DROP VIEW IF EXISTS trackView;
+```
+
+## Creating a joined view.
+
+Views can be created from joined queries
+
+```sql
+-- a regular join
+
+SELECT a.artist AS artist,
+    a.title AS album,
+    t.title AS track,
+    t.track_number AS trackno,
+    t.duration / 60 AS m,
+    t.duration % 60 AS s
+  FROM track AS t
+    JOIN album AS a
+      ON a.id = t.album_id
+;
+```
+
+Making the query into a view
+
+```sql
+CREATE VIEW joinedAlbum AS
+  SELECT a.artist AS artist,
+      a.title AS album,
+      t.title AS track,
+      t.track_number AS trackno,
+      t.duration / 60 AS m,
+      t.duration % 60 AS s
+    FROM track AS t
+    JOIN album AS a
+      ON a.id = t.album_id
+;
+```
+
+The view can then be queried as per any regular table
+
+```sql
+SELECT * FROM joinedAlbum WHERE artist = 'Jimi Hendrix';
+```
+
+And also deleted as per a regular table
+
+```sql
+DROP VIEW IF EXISTS joinedAlbum;
+```
+
+Deleting a view does not affect any underlying tables.
+
+
+# Defined functions
+
+## Overview
+
+There may be times when you want to use a function that doesn't exist in your database system.
+
+Many database systems provide a way for users to define their own functions.
+
+These are known as UDFs or User Defined Functions.
+
+Different database systems my require UDFs to be written in the following languages:
+* C or C++
+* Proprietary language
+* Scripting language (Python, Perl, PHP)
+
+UDFs are typically used for the following:
+* Unit conversions (lbs to kgs)
+* format conversions (seconds into hours or vice versa)
+* Aggregations (rolling average)
+
+SQLite accepts UDFs written in PHP.
+
+
+## Defining functions in PHP
+
+Example function written in PHP
+
+```php
+// SEC_TO_TIME( seconds INTEGER )
+function sec_to_time( $sec )
+{
+    if(is_null($sec)) return NULL;
+    $sec = intval($sec);    // make sure it's an integer
+    $s = $sec % 60;
+    $m = $sec / 60;
+    return sprintf('%d:%02d', $m, $s);
+}
+```
+
+Once defined this can then be used in any queries
+
+```sql
+-- basic usage
+SELECT SEC_TO_TIME(320);
+
+-- in an actual query
+SELECT title, duration, SEC_TO_TIME(duration) FROM track;\
+```
+
+Web page showing how to create custom functions in sqlite using python: https://pynative.com/python-sqlite-create-or-redefine-sqlite-functions/
+
